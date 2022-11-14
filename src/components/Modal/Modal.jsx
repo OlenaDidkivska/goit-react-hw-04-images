@@ -2,21 +2,23 @@ import { useEffect } from 'react';
 import { Overlay, ModalEl } from './Modal.styled';
 import PropTypes from 'prop-types';
 
-export default function Modal(onClose, contentModal) {
+export default function Modal({ onClose, contentModal }) {
   useEffect(() => {
+    const handleKeyDown = e => {
+      console.log(e);
+      if (e.code === 'Escape') {
+        onClose();
+      }
+    };
     window.addEventListener('keydown', handleKeyDown);
 
-    return window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const handleKeyDown = e => {
-    if (e.code === 'Escape') {
-      onClose();
-    }
-  };
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
 
   const handleOverlayClick = event => {
-    if (event.currentTarget !== event.target) {
+    if (event.currentTarget === event.target) {
       onClose();
     }
   };

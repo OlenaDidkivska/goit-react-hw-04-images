@@ -7,6 +7,7 @@ import Button from './Button/Button';
 import Loader from './Loader/Loader';
 import { ImageGalleryIdle } from './ImageGallery/ImageGallery.styled';
 import toast, { Toaster } from 'react-hot-toast';
+import { transformResponseData } from 'helpers/transformResponseData';
 
 export default function App() {
   const [query, setQuery] = useState('');
@@ -16,70 +17,68 @@ export default function App() {
   const [showBtn, setShowBtn] = useState(false);
 
   useEffect(() => {
-    console.log(query);
-    try {
-      if (!query) {
-        return;
-      }
-
+    if (!query) {
+      return;
+    }
+    const controller = new AbortController();
+    const fetchData = async () => {
       setStatus('pending');
+      const controlLastPage = totalPage => {
+        const isLastPage = page >= totalPage;
+        if (isLastPage) {
+          toast.success('You have viewed all images!', {
+            id: 'lastPage',
+          });
+          setShowBtn(false);
+          return true;
+        }
+        setShowBtn(true);
+        return false;
+      };
+      try {
+        const response = await fetchImageGallery(
+          query,
+          page,
+          controller.signal
+        );
 
-      const response = fetchImageGallery(query, page);
-      console.dir(response);
+        if (response.hits.length !== 0) {
+          const totalPage = Math.ceil(response.totalHits / 12);
+          controlLastPage(totalPage);
 
-      if (response.hits.length !== 0) {
-        const totalPage = Math.ceil(response.totalHits / 12);
-        controlLastPage(totalPage);
-
-        const result = response.hits.map(img => {
-          const { id, largeImageURL, webformatURL, tags } = img;
-          return {
-            id,
-            largeImageURL,
-            webformatURL,
-            tags,
-          };
-        });
-
-        setImages(state => [...state, ...result]);
+          const result = transformResponseData(response.hits);
+          return setImages(prevstate => [...prevstate, ...result]);
+        }
+        Promise.reject(
+          new Error(
+            toast.error(
+              <div>
+                Unfortunately, nothing was found for the query <b>{query}</b>
+              </div>,
+              {
+                id: query,
+              }
+            )
+          )
+        );
+        setShowBtn(false);
+        return setStatus('rejected');
+      } catch (error) {
+        setStatus('rejected');
+        setShowBtn(false);
+      } finally {
         setStatus('resolved');
       }
+    };
 
-      Promise.reject(
-        new Error(
-          toast.error(
-            <div>
-              Unfortunately, nothing was found for the query <b>{query}</b>
-            </div>,
-            {
-              id: query,
-            }
-          )
-        )
-      );
-      return setStatus('rejected');
-    } catch (error) {
-      console.log(error);
-      setStatus('rejected');
-    }
-  }, [query, page]);
-
-  const controlLastPage = totalPage => {
-    const isLastPage = page >= totalPage;
-    if (isLastPage) {
-      toast.success('You have viewed all images!', {
-        id: 'lastPage',
-      });
-      setShowBtn(false);
-      return true;
-    }
-    setShowBtn(true);
-    return false;
-  };
+    fetchData();
+    return () => {
+      controller.abort();
+    };
+  }, [page, query]);
 
   const handleFormSubmit = async ({ queryImg }) => {
-    console.log(queryImg);
-    if (query === queryImg) {
+    if (query === queryImg && images.length !== 0) {
       toast.success('This request has already been completed');
       return;
     }
@@ -94,7 +93,7 @@ export default function App() {
   };
 
   const handleGalleryButtonClick = () => {
-    setPage(state => [state + 1]);
+    setPage(prevstate => prevstate + 1);
   };
 
   return (

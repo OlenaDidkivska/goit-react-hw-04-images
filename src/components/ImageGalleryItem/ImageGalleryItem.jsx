@@ -6,20 +6,25 @@ import {
 } from './ImageGalleryItem.styled';
 import PropTypes from 'prop-types';
 
-export default function ImageGalleryItem(largeImageURL, webformatURL, tags) {
+export default function ImageGalleryItem({
+  largeImageURL,
+  webformatURL,
+  tags,
+}) {
   const [showModal, setShowModal] = useState(false);
-  const [contentModal, setContentModal] = useState('');
-
-  const toggleModal = () => {
-    setShowModal(!showModal);
-    setContentModal(largeImageURL);
-  };
 
   return (
-    <ImageGalleryItemEl onClick={toggleModal}>
-      <ImageGalleryItemImage src={webformatURL} alt={tags} />
-      {showModal && <Modal onClose={toggleModal} contentModal={contentModal} />}
-    </ImageGalleryItemEl>
+    <div>
+      <ImageGalleryItemEl onClick={() => setShowModal(true)}>
+        <ImageGalleryItemImage src={webformatURL} alt={tags} />
+      </ImageGalleryItemEl>
+      {showModal && (
+        <Modal
+          onClose={() => setShowModal(false)}
+          contentModal={largeImageURL}
+        />
+      )}
+    </div>
   );
 }
 
