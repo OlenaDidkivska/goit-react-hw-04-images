@@ -46,28 +46,16 @@ export default function App() {
           const totalPage = Math.ceil(response.totalHits / 12);
           controlLastPage(totalPage);
 
+          setStatus('resolved');
+
           const result = transformResponseData(response.hits);
           return setImages(prevstate => [...prevstate, ...result]);
         }
-        Promise.reject(
-          new Error(
-            toast.error(
-              <div>
-                Unfortunately, nothing was found for the query <b>{query}</b>
-              </div>,
-              {
-                id: query,
-              }
-            )
-          )
-        );
         setShowBtn(false);
         return setStatus('rejected');
       } catch (error) {
         setStatus('rejected');
         setShowBtn(false);
-      } finally {
-        setStatus('resolved');
       }
     };
 
