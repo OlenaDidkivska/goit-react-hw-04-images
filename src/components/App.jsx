@@ -65,6 +65,14 @@ export default function App() {
     };
   }, [page, query]);
 
+  useEffect(() => {
+    if (status !== 'rejected') return;
+
+    toast.error('Try to repeat the request.', {
+      id: 'Unfortunately, nothing was found...',
+    });
+  }, [status]);
+
   const handleFormSubmit = async ({ queryImg }) => {
     if (query === queryImg && images.length !== 0) {
       toast.success('This request has already been completed');
@@ -101,11 +109,6 @@ export default function App() {
       {status === 'resolved' && showBtn && (
         <Button onClick={handleGalleryButtonClick} />
       )}
-
-      {status === 'rejected' &&
-        toast.error('Try to repeat the request.', {
-          id: 'Unfortunately, nothing was found...',
-        })}
 
       <Toaster />
     </AppEl>
